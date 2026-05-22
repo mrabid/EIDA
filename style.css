@@ -1,0 +1,892 @@
+/* ================================================================
+   Eid Photo Generator — Premium Styles
+   Theme: Deep Crimson · Gold · Cream White
+   ================================================================ */
+
+/* ── Tokens ── */
+:root {
+  --crimson:        #8B1422;
+  --crimson-hover:  #a81a2c;
+  --crimson-dark:   #5a0d18;
+  --gold:           #C9A84C;
+  --gold-light:     #e4ca7a;
+  --gold-pale:      #f7f0de;
+  --white:          #ffffff;
+  --off-white:      #fdf8f4;
+  --border:         #e8ddd3;
+  --text:           #1a1a1a;
+  --text-muted:     #7a7070;
+  --card-shadow:    0 32px 90px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0,0,0,0.12);
+  --card-radius:    24px;
+  --input-radius:   12px;
+  --font-display:   'Cinzel', Georgia, serif;
+  --font-body:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --transition:     0.2s ease;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================================================================
+   Background
+   ================================================================ */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  opacity: 0.22;
+  z-index: 0;
+}
+.bg-orb--1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, #b52030, transparent 70%);
+  top: -180px; left: -180px;
+}
+.bg-orb--2 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, var(--gold), transparent 70%);
+  bottom: -120px; right: -120px;
+}
+
+.page-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(150deg, #6b0e1c 0%, #3d0710 50%, #1a0308 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem 3rem;
+  position: relative;
+  z-index: 0;
+}
+
+/* ================================================================
+   Card
+   ================================================================ */
+.card {
+  position: relative;
+  z-index: 1;
+  background: var(--white);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 2.5rem 2.5rem;
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  border-top: 4px solid var(--gold);
+  animation: cardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================================================
+   Header
+   ================================================================ */
+.card-header {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.logo {
+  max-height: 58px;
+  max-width: 200px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--crimson);
+  line-height: 1.1;
+}
+
+.card-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+.card-subtitle strong { color: var(--text); font-weight: 600; }
+
+.title-divider {
+  width: 72px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold) 40%, transparent);
+  border-radius: 2px;
+  margin-top: 0.6rem;
+}
+
+/* ================================================================
+   Steps
+   ================================================================ */
+.step-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--crimson);
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3px;
+  box-shadow: 0 4px 14px rgba(139,20,34,0.35);
+}
+
+.step-body { flex: 1; min-width: 0; }
+
+.step-label {
+  display: block;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+
+.step-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+/* ── Text input ── */
+.text-input {
+  width: 100%;
+  padding: 0.72rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--input-radius);
+  font-size: 1rem;
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--off-white);
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+.text-input::placeholder { color: #bbb; }
+.text-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: var(--white);
+  box-shadow: 0 0 0 3.5px rgba(201,168,76,0.18);
+}
+
+/* ── Upload zone ── */
+.upload-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  border: 1.5px solid rgba(201,168,76,0.38);
+  border-radius: 22px;
+  min-height: 170px;
+  padding: 1.5rem 1.4rem;
+  text-align: center;
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,242,232,0.95));
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition), transform var(--transition);
+  outline: none;
+}
+.upload-zone:hover,
+.upload-zone:focus-visible {
+  border-color: var(--crimson);
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,240,241,0.97));
+  box-shadow: 0 12px 32px rgba(139,20,34,0.12);
+  transform: translateY(-1px);
+}
+.upload-zone.drag-over {
+  border-color: var(--crimson);
+  background: #fff0f2;
+  box-shadow: 0 0 0 4px rgba(139,20,34,0.14);
+}
+.upload-zone.ready {
+  border-color: var(--crimson);
+  background: #fff5f6;
+}
+
+.upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(201,168,76,0.14);
+  color: var(--gold);
+  transition: color var(--transition), background var(--transition);
+}
+.upload-zone:hover .upload-icon,
+.upload-zone.ready .upload-icon { color: var(--crimson); background: rgba(231,52,43,0.08); }
+
+.upload-main {
+  font-size: 1rem;
+  color: var(--text);
+  font-weight: 700;
+}
+.upload-cta {
+  color: var(--crimson);
+  font-weight: 700;
+}
+.upload-sub {
+  font-size: 0.82rem;
+  color: #8f7c6d;
+  margin-top: 0.15rem;
+}
+.upload-zone.ready .upload-main { color: var(--crimson); }
+
+/* ── Template warning ── */
+.template-warn {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  background: #fff8e1;
+  border: 1px solid #f6c43a;
+  font-size: 0.82rem;
+  color: #7a5c00;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.warn-icon { font-size: 1rem; }
+.warn-link {
+  color: var(--crimson);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ================================================================
+   Preview
+   ================================================================ */
+.preview-section { width: 100%; }
+
+.preview-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  aspect-ratio: 1;
+  border-radius: 28px;
+  overflow: hidden; /* make template visible and crisp: remove background and soften shadows */
+  background: transparent;
+  box-shadow: none; /* remove decorative outline so template displays unchanged */
+  outline: none;
+}
+
+/* Placeholder (no photo yet) — now empty, kept for JS toggle */
+.preview-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  color: #8f7c6d;
+  font-size: 1rem;
+  text-align: center;
+  background: rgba(255,255,255,0.82);
+}
+
+/* Canvas fills its container */
+#previewCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: crisp-edges;
+}
+#previewCanvas[hidden] { display: none; }
+
+/* Success overlay */
+.preview-success {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #16a34a;
+  border-radius: 16px;
+  z-index: 2;
+  animation: successIn 0.4s ease both;
+  transition: opacity 0.5s;
+}
+.preview-success[hidden] { display: none; }
+.preview-success.fade-out { opacity: 0; }
+
+@keyframes successIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.success-check {
+  animation: checkPop 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes checkPop {
+  from { transform: scale(0); opacity: 0; }
+  50%  { transform: scale(1.2); }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* ================================================================
+   Actions
+   ================================================================ */
+.actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: 0.25rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.9rem 2.4rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: transform var(--transition), box-shadow var(--transition), background var(--transition), opacity var(--transition);
+}
+.btn:active:not(:disabled) { transform: scale(0.97); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--crimson-hover) 0%, var(--crimson-dark) 100%);
+  color: var(--white);
+  box-shadow: 0 4px 20px rgba(139,20,34,0.38);
+}
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c0223a 0%, var(--crimson) 100%);
+  box-shadow: 0 6px 30px rgba(139,20,34,0.50);
+  transform: translateY(-2px);
+}
+.btn-primary:disabled {
+  background: #ddd;
+  color: #aaa;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* After download button is enabled, subtle pulse once */
+.btn-primary.pulse {
+  animation: btnPulse 0.6s ease;
+}
+@keyframes btnPulse {
+  0%   { box-shadow: 0 4px 20px rgba(139,20,34,0.38); }
+  50%  { box-shadow: 0 0 0 10px rgba(139,20,34,0.08); }
+  100% { box-shadow: 0 4px 20px rgba(139,20,34,0.38); }
+}
+
+/* ================================================================
+   Responsive
+   ================================================================ */
+@media (max-width: 720px) {
+  .card { max-width: 100%; }
+}
+
+@media (max-width: 520px) {
+  .card {
+    padding: 1.75rem 1.1rem;
+    gap: 1.3rem;
+    border-radius: 20px;
+  }
+  .card-title  { font-size: 2rem; }
+  .preview-wrap { max-width: 100%; }
+  .btn { padding: 0.85rem 1.8rem; font-size: 0.95rem; }
+
+  .inline-salami { padding: 1.4rem 1rem 1.3rem; border-radius: 16px; }
+  .is-hook        { font-size: 1.05rem; }
+  .is-verse p     { font-size: 0.95rem; }
+  .is-verse-bold  { font-size: 1.05rem !important; }
+  .is-bkash-number{ font-size: 1.75rem; }
+  .is-chip        { font-size: 0.76rem; padding: 0.2rem 0.7rem; }
+}
+
+@media (max-width: 360px) {
+  .card-title { font-size: 1.7rem; }
+  .card { padding: 1.25rem 0.9rem; }
+  .is-bkash-number { font-size: 1.5rem; }
+}
+
+/* ================================================================
+   Inline Salami Banner
+   ================================================================ */
+.inline-salami {
+  width: 100%;
+  background: linear-gradient(160deg, #1e0409 0%, #4a0c15 50%, #1e0409 100%);
+  border: 1.5px solid rgba(201,168,76,0.45);
+  border-radius: 20px;
+  padding: 1.8rem 1.5rem 1.6rem;
+  text-align: center;
+  color: #fff;
+  box-shadow:
+    0 0 0 1px rgba(201,168,76,0.1),
+    0 8px 32px rgba(0,0,0,0.2),
+    0 0 50px rgba(139,20,34,0.15) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle radial glow behind */
+.inline-salami::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(180,30,50,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.is-moon {
+  font-size: 2rem;
+  margin-bottom: 0.4rem;
+  display: block;
+  filter: drop-shadow(0 0 10px rgba(201,168,76,0.6));
+  animation: moonFloat 3s ease-in-out infinite;
+}
+
+.is-hook {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--gold-light);
+  margin-bottom: 0.6rem;
+  text-shadow: 0 2px 12px rgba(201,168,76,0.4);
+  letter-spacing: 0.01em;
+}
+
+.is-verse {
+  line-height: 1.65;
+  margin-bottom: 1.1rem;
+}
+.is-verse p {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.7);
+  font-family: 'Hind Siliguri', 'SolaimanLipi', Arial, sans-serif;
+}
+.is-verse-bold {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+}
+
+.is-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.5) 50%, transparent);
+  margin: 0.9rem auto;
+  width: 80%;
+}
+
+.is-bkash-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 0.4rem;
+}
+
+.is-bkash-number {
+  font-size: 2.1rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  font-family: 'Inter', monospace, sans-serif;
+  margin-bottom: 1.1rem;
+  line-height: 1;
+  background: linear-gradient(135deg, #ff8a8a 0%, #ffffff 50%, #ff8a8a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  text-decoration: none;
+}
+
+.is-ref {
+  background: rgba(201,168,76,0.07);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+}
+
+.is-ref-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 0.55rem;
+  letter-spacing: 0.02em;
+}
+
+.is-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.is-chip {
+  background: rgba(201,168,76,0.12);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 100px;
+  padding: 0.25rem 0.85rem;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.88);
+  font-family: 'Hind Siliguri', 'SolaimanLipi', Arial, sans-serif;
+}
+
+/* ── Help / WhatsApp line ── */
+.help-line {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.help-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #16a34a;
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 0.2rem;
+}
+.help-wa:hover { text-decoration: underline; }
+
+/* ================================================================
+   Eid Salami Popup
+   ================================================================ */
+.salami-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(8, 1, 4, 0.78);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: overlayIn 0.4s ease both;
+}
+.salami-overlay.hide { animation: overlayOut 0.35s ease both; }
+@keyframes overlayIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes overlayOut { from { opacity: 1; } to { opacity: 0; } }
+
+.salami-card {
+  position: relative;
+  background: linear-gradient(170deg, #200408 0%, #450910 45%, #200408 100%);
+  border: 1.5px solid rgba(201,168,76,0.6);
+  border-radius: 26px;
+  padding: 0;
+  width: 100%;
+  max-width: 410px;
+  text-align: center;
+  color: #fff;
+  box-shadow:
+    0 0 0 1px rgba(201,168,76,0.12),
+    0 40px 100px rgba(0,0,0,0.7),
+    0 0 80px rgba(180,30,50,0.2) inset;
+  animation: cardPop 0.5s cubic-bezier(0.22,1,0.36,1) both;
+  overflow: hidden;
+}
+@keyframes cardPop {
+  from { opacity: 0; transform: scale(0.85) translateY(24px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Close button ── */
+.salami-close {
+  position: absolute;
+  top: 0.8rem; right: 0.8rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.55);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, color 0.2s;
+  z-index: 2;
+}
+.salami-close:hover { background: rgba(255,255,255,0.16); color: #fff; }
+
+/* ── Festive header band ── */
+.salami-header {
+  background: linear-gradient(135deg, #8B1422 0%, #c0223a 50%, #8B1422 100%);
+  padding: 1.4rem 1.5rem 1rem;
+  border-bottom: 1px solid rgba(201,168,76,0.3);
+}
+.salami-moon-emoji {
+  display: block;
+  font-size: 2.6rem;
+  margin-bottom: 0.3rem;
+  filter: drop-shadow(0 0 12px rgba(201,168,76,0.7));
+  animation: moonFloat 3s ease-in-out infinite;
+}
+@keyframes moonFloat {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+.salami-sparkles {
+  display: flex; justify-content: center; gap: 0.6rem;
+  color: var(--gold-light);
+  font-size: 0.6rem;
+  opacity: 0.8;
+}
+
+/* ── Body ── */
+.salami-body-wrap {
+  padding: 1.3rem 1.7rem 1.5rem;
+}
+
+/* ── Hook ── */
+.salami-hook {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--gold-light);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.7rem;
+  text-shadow: 0 2px 14px rgba(201,168,76,0.4);
+}
+
+/* ── Verse ── */
+.salami-verse {
+  margin-bottom: 1.1rem;
+  line-height: 1.6;
+}
+.salami-verse p {
+  font-size: 1.15rem;
+  color: rgba(255,255,255,0.75);
+  font-family: 'Hind Siliguri', 'SolaimanLipi', Arial, sans-serif;
+}
+.verse-bold {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  text-shadow: 0 0 20px rgba(255,255,255,0.15);
+}
+
+/* ── Divider ── */
+.salami-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.45) 50%, transparent);
+  margin: 0.9rem 0;
+}
+
+/* ── bKash ── */
+.bkash-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 0.45rem;
+}
+.salami-bkash {
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,138,138,0.4);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 0 24px rgba(255,138,138,0.12) inset;
+}
+.bkash-number {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  font-family: 'Inter', monospace, sans-serif;
+  display: block;
+  background: linear-gradient(135deg, #ff8a8a 0%, #ffffff 50%, #ff8a8a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  text-decoration: none;
+}
+
+/* ── Reference chips ── */
+.salami-ref {
+  background: rgba(201,168,76,0.07);
+  border: 1px solid rgba(201,168,76,0.22);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.9rem;
+}
+.ref-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 0.55rem;
+  letter-spacing: 0.03em;
+}
+.ref-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+.chip {
+  background: rgba(201,168,76,0.12);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 100px;
+  padding: 0.22rem 0.75rem;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.85);
+  font-family: 'Hind Siliguri', 'SolaimanLipi', Arial, sans-serif;
+}
+
+/* ── WhatsApp help ── */
+.salami-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(37,211,102,0.1);
+  border: 1px solid rgba(37,211,102,0.3);
+  border-radius: 100px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.76rem;
+  color: #4ade80;
+  text-decoration: none;
+  margin-bottom: 1.1rem;
+  transition: background 0.2s;
+  font-family: 'Hind Siliguri', Arial, sans-serif;
+}
+.salami-whatsapp:hover { background: rgba(37,211,102,0.2); }
+
+/* ── Timer ── */
+.salami-timer {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.45rem;
+}
+.timer-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #f5c842, #e6a800);
+  border-radius: 3px;
+  transform-origin: left;
+  animation: timerShrink 5s linear forwards;
+}
+@keyframes timerShrink {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+.timer-label {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.28);
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 440px) {
+  .salami-body-wrap { padding: 1.1rem 1.2rem 1.3rem; }
+  .bkash-number { font-size: 1.55rem; }
+  .salami-verse p { font-size: 1rem; }
+  .verse-bold { font-size: 1.1rem !important; }
+  .salami-hook { font-size: 1.1rem; }
+  .salami-card { max-width: 95%; }
+}
+
+/* ================================================================
+   Copy-to-clipboard bKash number
+   ================================================================ */
+.is-bkash-number[data-copy],
+.bkash-number[data-copy] {
+  cursor: pointer;
+  transition: transform 0.15s, filter 0.15s;
+  user-select: all;
+  -webkit-user-select: all;
+  -webkit-text-fill-color: transparent;
+  text-decoration: none !important;
+}
+.is-bkash-number[data-copy]:hover,
+.bkash-number[data-copy]:hover {
+  transform: scale(1.04);
+  filter: brightness(1.2) drop-shadow(0 0 12px rgba(255,138,138,0.6));
+}
+.is-bkash-number[data-copy]:active,
+.bkash-number[data-copy]:active {
+  transform: scale(0.97);
+}
+
+.bkash-copy-hint {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 0.3rem;
+  letter-spacing: 0.03em;
+}
+.inline-salami .bkash-copy-hint { margin-bottom: 0.8rem; }
+
+/* ── Toast ── */
+.copy-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1a1a1a;
+  color: #fff;
+  padding: 0.65rem 1.4rem;
+  border-radius: 100px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  font-family: 'Hind Siliguri', Arial, sans-serif;
+}
+.copy-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
