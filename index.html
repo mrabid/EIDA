@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Cinzel: premium serif for headings | Inter: clean sans for body -->
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet" crossorigin="anonymous">
 </head>
 <body>
 
@@ -78,10 +78,11 @@
       <section class="preview-section" aria-label="Generated photo preview">
         <div class="preview-wrap" id="previewWrap">
 
-          <!-- Placeholder (no photo yet) -->
-          <div class="preview-placeholder" id="previewPlaceholder"></div>
+          <!-- Placeholder while template loads -->
+          <div class="preview-placeholder" id="previewPlaceholder">
+            <span class="preview-placeholder-text">Loading template…</span>
+          </div>
 
-          <!-- Canvas (hidden until photo ready) -->
           <canvas id="previewCanvas" width="1080" height="1080"
                   aria-label="Preview of your Eid photo" hidden></canvas>
 
@@ -119,8 +120,8 @@
   </div>
 
     <!-- Preload the template image so canvas can use it -->
-    <img src="assets/EidT.png" id="templateAsset" alt=""
-      style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;">
+    <img src="assets/EidT.png" id="templateAsset" alt="" crossorigin="anonymous"
+      style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;">
 
   <div class="copy-toast" id="copyToast" aria-live="polite" hidden>নম্বর কপি হয়েছে!</div>
   <script src="script.js"></script>

@@ -11,21 +11,88 @@
   const successEl = document.getElementById('previewSuccess');
   const downloadBtn = document.getElementById('downloadBtn');
   const templateAsset = document.getElementById('templateAsset');
-
+  const previewWrap = document.getElementById('previewWrap');
 
   /* ── Canvas size ── */
-  const CW = 1080, CH = 1080;
-
-  // start with a sensible default; we'll auto-detect from the template when it loads
-  let PHOTO_BOX = {
-    x: 48,
-    y: 200,
-    width: 520,
-    height: 700
+  const BASE_CANVAS_SIZE = 1080;
+  const REF_TEMPLATE_SIZE = 1600;
+  const REF_LAYOUT = {
+    photo: { x: 164, y: 414, width: 543, height: 687 },
+    nameGap: 78
   };
+  const NAME_COLOR = '#7a0c18';
+  const PHOTO_PADDING = 0.03;
 
-  let NAME_X = PHOTO_BOX.x + PHOTO_BOX.width / 2;
-  let NAME_Y = PHOTO_BOX.y + PHOTO_BOX.height + 64;
+  let CW = BASE_CANVAS_SIZE, CH = BASE_CANVAS_SIZE;
+
+  function getCanvasScale() {
+    return CW / BASE_CANVAS_SIZE;
+  }
+
+  function scaleRefLayout(w, h) {
+    const s = w / REF_TEMPLATE_SIZE;
+    return {
+      photo: {
+        x: Math.round(REF_LAYOUT.photo.x * s),
+        y: Math.round(REF_LAYOUT.photo.y * s),
+        width: Math.round(REF_LAYOUT.photo.width * s),
+        height: Math.round(REF_LAYOUT.photo.height * s)
+      },
+      nameGap: Math.round(REF_LAYOUT.nameGap * s)
+    };
+  }
+
+  let PHOTO_BOX = scaleRefLayout(BASE_CANVAS_SIZE, BASE_CANVAS_SIZE).photo;
+  let NAME_GAP = scaleRefLayout(BASE_CANVAS_SIZE, BASE_CANVAS_SIZE).nameGap;
+  let NAME_X = PHOTO_BOX.x + Math.round(PHOTO_BOX.width / 2);
+  let NAME_Y = PHOTO_BOX.y + PHOTO_BOX.height + NAME_GAP;
+
+  function updateNamePosition() {
+    NAME_X = PHOTO_BOX.x + Math.round(PHOTO_BOX.width / 2);
+    NAME_Y = PHOTO_BOX.y + PHOTO_BOX.height + NAME_GAP;
+  }
+
+  function applyCalibratedLayout(w, h) {
+    const layout = scaleRefLayout(w, h);
+    PHOTO_BOX = layout.photo;
+    NAME_GAP = layout.nameGap;
+    updateNamePosition();
+  }
+
+  function detectTransparentArch(data, w, h) {
+    const xLimit = Math.floor(w * 0.62);
+    let minx = w, miny = h, maxx = 0, maxy = 0;
+    const step = 2;
+    for (let y = 0; y < h; y += step) {
+      for (let x = 0; x < xLimit; x += step) {
+        const a = data[(y * w + x) * 4 + 3];
+        if (a < 40) {
+          if (x < minx) minx = x;
+          if (y < miny) miny = y;
+          if (x > maxx) maxx = x;
+          if (y > maxy) maxy = y;
+        }
+      }
+    }
+    if (maxx <= minx || maxy <= miny) return null;
+    const pad = Math.max(12, Math.round(18 * (w / REF_TEMPLATE_SIZE)));
+    const box = {
+      x: minx + pad,
+      y: miny + pad,
+      width: (maxx - minx) - pad * 2,
+      height: (maxy - miny) - pad * 2
+    };
+    if (box.width < 80 || box.height < 80) return null;
+    return box;
+  }
+
+  function syncPreviewDisplaySize() {
+    if (!previewWrap || !canvas) return;
+    const cssW = previewWrap.clientWidth;
+    if (!cssW) return;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssW + 'px';
+  }
  
   let tplCanvas = null;
   let photoBitmap = null;
@@ -34,20 +101,21 @@
 
   /* ── TEMPLATE ── */
   function tryLoadTemplate() {
-    // If there is no external template image element, always fall back.
     if (!templateAsset) {
       tplCanvas = createFallbackTemplate();
       renderCanvas();
       return;
     }
 
-    // If the image is already loaded and valid, build from it.
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+      templateAsset.crossOrigin = 'anonymous';
+    }
+
     if (templateAsset.complete && templateAsset.naturalWidth > 0) {
       buildTplCanvas(templateAsset);
       return;
     }
 
-    // Otherwise, wait for load / error.
     templateAsset.onload = function () { buildTplCanvas(templateAsset); };
     templateAsset.onerror = function () {
       tplCanvas = createFallbackTemplate();
@@ -71,72 +139,42 @@
   }
 
   function buildTplCanvas(img) {
+    if (img.naturalWidth && img.naturalHeight && (img.naturalWidth !== CW || img.naturalHeight !== CH)) {
+      CW = img.naturalWidth;
+      CH = img.naturalHeight;
+    }
+
     const off = document.createElement('canvas');
     off.width = CW; off.height = CH;
     const ctx = off.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
 
     // Draw template WITHOUT cutting — keep it fully intact
     ctx.drawImage(img, 0, 0, CW, CH);
 
-    // Only auto-detect arch area from the template image (for PHOTO_BOX coords, not for cutting)
+    // Detect transparent arch cutout (EidT.png uses alpha, not a white fill)
     try {
       const imgData = ctx.getImageData(0, 0, CW, CH);
-      const data = imgData.data;
-      const w = CW, h = CH;
-      let minx = w, miny = h, maxx = 0, maxy = 0;
-      const xLimit = Math.floor(w * 0.62); // search left ~62%
-      const step = 2; // sample every Nth pixel for speed
-      for (let y = 0; y < h; y += step) {
-        for (let x = 0; x < xLimit; x += step) {
-          const i = (y * w + x) * 4;
-          const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
-          const lum = 0.2126*r + 0.7152*g + 0.0722*b;
-          if (a > 200 && lum > 230) {
-            if (x < minx) minx = x;
-            if (y < miny) miny = y;
-            if (x > maxx) maxx = x;
-            if (y > maxy) maxy = y;
-          }
-        }
-      }
-      if (maxx > minx && maxy > miny) {
-        // expand more to avoid anti-aliased fringe from the template border
-        const padX = Math.round((maxx - minx) * 0.10) + 12;
-        const padY = Math.round((maxy - miny) * 0.06) + 12;
-        PHOTO_BOX = {
-          x: Math.max(0, minx - padX),
-          y: Math.max(0, miny - padY),
-          width: Math.min(w - 1, (maxx - minx) + padX*2),
-          height: Math.min(h - 1, (maxy - miny) + padY*2)
-        };
-        NAME_X = PHOTO_BOX.x + Math.round(PHOTO_BOX.width / 2);
-        NAME_Y = PHOTO_BOX.y + PHOTO_BOX.height + 48;
+      const detected = detectTransparentArch(imgData.data, CW, CH);
+      if (detected) {
+        PHOTO_BOX = detected;
+        const layout = scaleRefLayout(CW, CH);
+        NAME_GAP = layout.nameGap;
+        updateNamePosition();
       } else {
-        // no reliable detection — fall back to percentage-based box
-        PHOTO_BOX = {
-          x: Math.round(CW * 0.044),
-          y: Math.round(CW * 0.185),
-          width: Math.round(CW * 0.481),
-          height: Math.round(CW * 0.648)
-        };
-        NAME_X = PHOTO_BOX.x + Math.round(PHOTO_BOX.width / 2);
-        NAME_Y = PHOTO_BOX.y + PHOTO_BOX.height + 48;
+        applyCalibratedLayout(CW, CH);
       }
     } catch (e) {
-      // if getImageData is blocked (cross-origin) or other error, fall back to
-      // percentage-based coordinates so behavior is consistent under http:// and file://
       console.warn('Template auto-detect failed:', e);
-      PHOTO_BOX = {
-        x: Math.round(CW * 0.044),
-        y: Math.round(CW * 0.185),
-        width: Math.round(CW * 0.481),
-        height: Math.round(CW * 0.648)
-      };
-      NAME_X = PHOTO_BOX.x + Math.round(PHOTO_BOX.width / 2);
-      NAME_Y = PHOTO_BOX.y + PHOTO_BOX.height + 48;
+      applyCalibratedLayout(CW, CH);
     }
 
     tplCanvas = off;
+    if (photoOriginal) {
+      try { photoBitmap = cropToBitmap(photoOriginal); } catch { photoBitmap = null; }
+    }
     renderCanvas();
   }
 
@@ -182,29 +220,24 @@
     return off;
   }
 
-  /* ── RENDER ── */
-  function renderCanvas() {
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = false;
-    canvas.width = CW; canvas.height = CH;
+  function paintComposite(ctx, opts) {
+    opts = opts || {};
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, CW, CH);
 
-    // 1️⃣ Draw uploaded photo (clipped to arch only, with padding to reduce size)
     if (photoBitmap || photoOriginal) {
       ctx.save();
-      // Clip to arch shape — this is the ONLY constraint on the image
-      roundedArchPath(ctx, PHOTO_BOX.x, PHOTO_BOX.y, PHOTO_BOX.width, PHOTO_BOX.height, 44);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      roundedArchPath(ctx, PHOTO_BOX.x, PHOTO_BOX.y, PHOTO_BOX.width, PHOTO_BOX.height, archCornerRadius());
       ctx.clip();
 
-      // Add padding to reduce image size
-      const paddingFactor = 0.12; // 12% padding on each side, 76% image
-      const innerW = Math.round(PHOTO_BOX.width * (1 - paddingFactor * 2));
-      const innerH = Math.round(PHOTO_BOX.height * (1 - paddingFactor * 2));
-      const innerX = PHOTO_BOX.x + Math.round(PHOTO_BOX.width * paddingFactor);
-      const innerY = PHOTO_BOX.y + Math.round(PHOTO_BOX.height * paddingFactor);
+      const pad = PHOTO_PADDING;
+      const innerW = Math.round(PHOTO_BOX.width * (1 - pad * 2));
+      const innerH = Math.round(PHOTO_BOX.height * (1 - pad * 2));
+      const innerX = PHOTO_BOX.x + Math.round(PHOTO_BOX.width * pad);
+      const innerY = PHOTO_BOX.y + Math.round(PHOTO_BOX.height * pad);
 
-      // Draw image scaled to inner box
       const drawSource = photoBitmap || photoOriginal;
       if (photoBitmap) {
         ctx.drawImage(photoBitmap, innerX, innerY, innerW, innerH);
@@ -223,28 +256,127 @@
       ctx.restore();
     }
 
-    // 2️⃣ Draw template FULLY (completely intact, no cutting, no modification)
-    // — this ensures the template design is never damaged
-    if (tplCanvas) ctx.drawImage(tplCanvas, 0, 0);
+    if (tplCanvas) {
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(tplCanvas, 0, 0, CW, CH);
+    }
 
-    // 3️⃣ Draw name
-    drawName(ctx, nameInput.value);
+    if (opts.export) {
+      drawNameSystem(ctx, nameInput.value);
+    } else {
+      drawName(ctx, nameInput.value);
+    }
+  }
+
+  function renderCanvas() {
+    const ctx = canvas.getContext('2d');
+    canvas.width = CW;
+    canvas.height = CH;
+    paintComposite(ctx);
 
     canvas.hidden = false;
-    placeholder.hidden = true;
+    if (placeholder) placeholder.hidden = true;
     downloadBtn.disabled = !photoOriginal;
+    syncPreviewDisplaySize();
+  }
+
+  function waitForFonts() {
+    if (!document.fonts || !document.fonts.load) {
+      return Promise.resolve();
+    }
+    const scale = CW / REF_TEMPLATE_SIZE;
+    const size = Math.max(30, Math.round(44 * scale));
+    return Promise.all([
+      document.fonts.ready,
+      document.fonts.load('800 ' + size + 'px Inter'),
+      document.fonts.load('700 ' + size + 'px Inter')
+    ]).catch(function () { return undefined; });
+  }
+
+  function triggerFileDownload(url, isObjectUrl) {
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.download = 'eid-mubarak-chuti.png';
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    if (isObjectUrl) {
+      setTimeout(function () { URL.revokeObjectURL(url); }, 15000);
+    }
+  }
+
+  function downloadComposite() {
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = CW;
+    exportCanvas.height = CH;
+    paintComposite(exportCanvas.getContext('2d'), { export: true });
+
+    if (typeof exportCanvas.toBlob === 'function') {
+      exportCanvas.toBlob(function (blob) {
+        if (blob && blob.size > 0) {
+          triggerFileDownload(URL.createObjectURL(blob), true);
+          return;
+        }
+        saveDataUrl(exportCanvas);
+      }, 'image/png', 1);
+      return;
+    }
+    saveDataUrl(exportCanvas);
+  }
+
+  function saveDataUrl(exportCanvas) {
+    const dataUrl = exportCanvas.toDataURL('image/png');
+    if (!dataUrl || dataUrl.length < 100) {
+      throw new Error('empty export');
+    }
+    triggerFileDownload(dataUrl, false);
+  }
+
+  function drawNameSystem(ctx, rawName) {
+    const name = (rawName || '').trim();
+    if (!name) return;
+    const scale = CW / REF_TEMPLATE_SIZE;
+    const size = Math.max(30, Math.round(44 * scale));
+    ctx.save();
+    ctx.font = `800 ${size}px Arial, Helvetica, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    const words = name.split(/\s+/);
+    const lines = words.length <= 2 ? [name] : [
+      words.slice(0, Math.ceil(words.length / 2)).join(' '),
+      words.slice(Math.ceil(words.length / 2)).join(' ')
+    ];
+    const lineGap = Math.max(6, Math.round(8 * scale));
+    const totalH = lines.length * size + (lines.length - 1) * lineGap;
+    let startY = NAME_Y - totalH / 2 + size;
+    const outline = Math.max(2, Math.round(2.5 * scale));
+    lines.forEach(function (line, i) {
+      const ly = startY + i * (size + lineGap);
+      ctx.lineWidth = outline;
+      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+      ctx.strokeText(line, NAME_X, ly);
+      ctx.fillStyle = NAME_COLOR;
+      ctx.fillText(line, NAME_X, ly);
+    });
+    ctx.restore();
+  }
+
+  function archCornerRadius() {
+    return Math.max(24, Math.round(44 * (CW / REF_TEMPLATE_SIZE)));
   }
 
   function drawName(ctx, rawName) {
     const name = (rawName || '').trim();
     if (!name) return;
     ctx.save();
-    const size = 24;
-    const lineGap = 6;
-    ctx.font = `700 ${size}px 'Cinzel', Georgia, serif`;
+    const scale = CW / REF_TEMPLATE_SIZE;
+    const size = Math.max(30, Math.round(44 * scale));
+    const lineGap = Math.max(6, Math.round(8 * scale));
+    ctx.font = `800 ${size}px Inter, Arial, 'Helvetica Neue', sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    // Remove shadow effects for crisp colors
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
@@ -261,14 +393,15 @@
 
     var totalH = lines.length * size + (lines.length - 1) * lineGap;
     var startY = NAME_Y - totalH / 2 + size;
+    const outline = Math.max(2, Math.round(2.5 * scale));
 
     for (var i = 0; i < lines.length; i++) {
       var ly = startY + i * (size + lineGap);
-      ctx.fillStyle = '#d93d15';
-      ctx.fillText(lines[i], NAME_X, ly);
-      ctx.lineWidth = 1.8;
-      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = outline;
+      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
       ctx.strokeText(lines[i], NAME_X, ly);
+      ctx.fillStyle = NAME_COLOR;
+      ctx.fillText(lines[i], NAME_X, ly);
     }
     ctx.restore();
   }
@@ -342,41 +475,37 @@
   uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); loadPhoto(e.dataTransfer.files[0]); });
   uploadZone.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') { e.preventDefault(); photoInput.click(); } });
 
-  downloadBtn.addEventListener('click', () => {
+  downloadBtn.addEventListener('click', function () {
     if (!photoOriginal || downloadBtn.disabled) return;
-    try {
-      canvas.toBlob(function (blob) {
-        if (!blob) {
-          fallbackDownload();
-          return;
-        }
-        const a = document.createElement('a');
-        a.download = 'eid-mubarak-chuti.png';
-        a.href = URL.createObjectURL(blob);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-      }, 'image/png');
-    } catch (e) {
-      fallbackDownload();
+
+    if (location.protocol === 'file:') {
+      alert('Download works after you host this site online (GitHub Pages) or via Live Server — not from a saved HTML file.');
+      return;
     }
 
-    function fallbackDownload() {
+    downloadBtn.disabled = true;
+    waitForFonts().then(function () {
+      renderCanvas();
       try {
-        const dataUrl = canvas.toDataURL('image/png');
-        const a = document.createElement('a');
-        a.download = 'eid-mubarak-chuti.png';
-        a.href = dataUrl;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } catch (e2) {
-        alert('Download failed. Tip: Open the page via a local web server (e.g. Live Server) instead of file://');
+        downloadComposite();
+      } catch (e) {
+        console.error(e);
+        alert('Download failed. Refresh the page, upload your photo again, then try Download.');
       }
-    }
+    }).catch(function () {
+      renderCanvas();
+      try {
+        downloadComposite();
+      } catch (e) {
+        console.error(e);
+        alert('Download failed. Refresh the page, upload your photo again, then try Download.');
+      }
+    }).finally(function () {
+      downloadBtn.disabled = !photoOriginal;
+    });
   });
 
+  window.addEventListener('resize', syncPreviewDisplaySize);
   tryLoadTemplate();
 
   /* ── Eid Salami Popup ── */
