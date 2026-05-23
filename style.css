@@ -328,19 +328,32 @@ body {
   text-align: center;
   background: #f5f0ea;
   z-index: 1;
+  pointer-events: none;
 }
-.preview-placeholder[hidden] { display: none; }
 .preview-placeholder-text { max-width: 14rem; line-height: 1.45; }
 
+.preview-wrap[data-state="ready"] .preview-placeholder {
+  display: none;
+}
+
 #previewCanvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
-  height: auto;
-  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 2;
+  opacity: 0;
+  visibility: hidden;
   image-rendering: auto;
   -ms-interpolation-mode: bicubic;
 }
-#previewCanvas[hidden] { display: none; }
+
+.preview-wrap[data-state="ready"] #previewCanvas {
+  opacity: 1;
+  visibility: visible;
+}
 
 /* Success overlay */
 .preview-success {

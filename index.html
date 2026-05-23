@@ -76,15 +76,14 @@
 
       <!-- ── Preview canvas ── -->
       <section class="preview-section" aria-label="Generated photo preview">
-        <div class="preview-wrap" id="previewWrap">
+        <div class="preview-wrap" id="previewWrap" data-state="loading">
 
-          <!-- Placeholder while template loads -->
           <div class="preview-placeholder" id="previewPlaceholder">
-            <span class="preview-placeholder-text">Loading template…</span>
+            <span class="preview-placeholder-text" id="previewPlaceholderText">Loading template…</span>
           </div>
 
           <canvas id="previewCanvas" width="1080" height="1080"
-                  aria-label="Preview of your Eid photo" hidden></canvas>
+                  aria-label="Preview of your Eid photo"></canvas>
 
           <!-- Success overlay -->
           <div class="preview-success" id="previewSuccess" hidden aria-live="polite">
@@ -119,9 +118,8 @@
     </main>
   </div>
 
-    <!-- Preload the template image so canvas can use it -->
-    <img src="assets/EidT.png" id="templateAsset" alt="" crossorigin="anonymous"
-      style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;">
+    <!-- Template path reference (loaded by script.js) -->
+    <img src="assets/EidT.png" id="templateAsset" alt="" hidden>
 
   <div class="copy-toast" id="copyToast" aria-live="polite" hidden>নম্বর কপি হয়েছে!</div>
   <script src="script.js"></script>

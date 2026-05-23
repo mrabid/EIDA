@@ -12,6 +12,10 @@
   const downloadBtn = document.getElementById('downloadBtn');
   const templateAsset = document.getElementById('templateAsset');
   const previewWrap = document.getElementById('previewWrap');
+  const placeholderText = document.getElementById('previewPlaceholderText');
+  const TEMPLATE_PATH = 'assets/EidT.png';
+  let templateLoadStarted = false;
+  let templateLoaded = false;
 
   /* ── Canvas size ── */
   const BASE_CANVAS_SIZE = 1080;
@@ -21,7 +25,9 @@
     nameGap: 78
   };
   const NAME_COLOR = '#7a0c18';
-  const PHOTO_PADDING = 0.03;
+  const PHOTO_SCALE = 1.08;
+  const NAME_LINE_REF = 'Mozammel Hosain';
+  const NAME_FONT_REF = 54;
 
   let CW = BASE_CANVAS_SIZE, CH = BASE_CANVAS_SIZE;
 
@@ -90,8 +96,26 @@
     if (!previewWrap || !canvas) return;
     const cssW = previewWrap.clientWidth;
     if (!cssW) return;
-    canvas.style.width = cssW + 'px';
-    canvas.style.height = cssW + 'px';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+  }
+
+  function resolveTemplateUrl() {
+    const src = (templateAsset && templateAsset.getAttribute('src')) || TEMPLATE_PATH;
+    try {
+      return new URL(src, window.location.href).href;
+    } catch (e) {
+      return src;
+    }
+  }
+
+  function setPreviewState(state) {
+    if (previewWrap) previewWrap.dataset.state = state;
+  }
+
+  function showPlaceholderMessage(message) {
+    if (placeholderText) placeholderText.textContent = message;
+    setPreviewState('loading');
   }
  
   let tplCanvas = null;
@@ -100,27 +124,46 @@
   let nameTimer = null;
 
   /* ── TEMPLATE ── */
+  function onTemplateLoadFail() {
+    if (templateLoaded) return;
+    console.warn('Template image could not load:', resolveTemplateUrl());
+    showPlaceholderMessage('Template not found. Check assets/EidT.png is uploaded.');
+    tplCanvas = createFallbackTemplate();
+    renderCanvas();
+  }
+
   function tryLoadTemplate() {
-    if (!templateAsset) {
-      tplCanvas = createFallbackTemplate();
-      renderCanvas();
-      return;
+    if (templateLoadStarted) return;
+    templateLoadStarted = true;
+    showPlaceholderMessage('Loading template…');
+
+    const url = resolveTemplateUrl();
+    const img = new Image();
+    let templateOrigin = '';
+    try {
+      templateOrigin = new URL(url).origin;
+    } catch (e) { /* keep empty */ }
+    if (
+      templateOrigin &&
+      templateOrigin !== window.location.origin &&
+      (location.protocol === 'http:' || location.protocol === 'https:')
+    ) {
+      img.crossOrigin = 'anonymous';
     }
 
-    if (location.protocol === 'http:' || location.protocol === 'https:') {
-      templateAsset.crossOrigin = 'anonymous';
-    }
-
-    if (templateAsset.complete && templateAsset.naturalWidth > 0) {
-      buildTplCanvas(templateAsset);
-      return;
-    }
-
-    templateAsset.onload = function () { buildTplCanvas(templateAsset); };
-    templateAsset.onerror = function () {
-      tplCanvas = createFallbackTemplate();
-      renderCanvas();
+    img.onload = function () {
+      if (!img.naturalWidth || !img.naturalHeight) {
+        onTemplateLoadFail();
+        return;
+      }
+      buildTplCanvas(img);
     };
+    img.onerror = onTemplateLoadFail;
+    img.src = url;
+
+    setTimeout(function () {
+      if (!templateLoaded) onTemplateLoadFail();
+    }, 15000);
   }
 
   function createFallbackTemplate() {
@@ -172,6 +215,7 @@
     }
 
     tplCanvas = off;
+    templateLoaded = true;
     if (photoOriginal) {
       try { photoBitmap = cropToBitmap(photoOriginal); } catch { photoBitmap = null; }
     }
@@ -214,7 +258,8 @@
     const sh = ih * scale;
 
     const off = document.createElement('canvas');
-    off.width = PHOTO_BOX.width; off.height = PHOTO_BOX.height;
+    off.width = PHOTO_BOX.width;
+    off.height = PHOTO_BOX.height;
     const ctx = off.getContext('2d');
     ctx.drawImage(img, (PHOTO_BOX.width - sw) / 2, (PHOTO_BOX.height - sh) / 2, sw, sh);
     return off;
@@ -226,30 +271,27 @@
     ctx.fillRect(0, 0, CW, CH);
 
     if (photoBitmap || photoOriginal) {
+      const drawW = Math.round(PHOTO_BOX.width * PHOTO_SCALE);
+      const drawH = Math.round(PHOTO_BOX.height * PHOTO_SCALE);
+      const drawX = PHOTO_BOX.x - Math.round((drawW - PHOTO_BOX.width) / 2);
+      const drawY = PHOTO_BOX.y - Math.round((drawH - PHOTO_BOX.height) / 2);
+
       ctx.save();
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      roundedArchPath(ctx, PHOTO_BOX.x, PHOTO_BOX.y, PHOTO_BOX.width, PHOTO_BOX.height, archCornerRadius());
-      ctx.clip();
-
-      const pad = PHOTO_PADDING;
-      const innerW = Math.round(PHOTO_BOX.width * (1 - pad * 2));
-      const innerH = Math.round(PHOTO_BOX.height * (1 - pad * 2));
-      const innerX = PHOTO_BOX.x + Math.round(PHOTO_BOX.width * pad);
-      const innerY = PHOTO_BOX.y + Math.round(PHOTO_BOX.height * pad);
 
       const drawSource = photoBitmap || photoOriginal;
       if (photoBitmap) {
-        ctx.drawImage(photoBitmap, innerX, innerY, innerW, innerH);
+        ctx.drawImage(photoBitmap, drawX, drawY, drawW, drawH);
       } else {
         const srcW = drawSource.naturalWidth || drawSource.width;
         const srcH = drawSource.naturalHeight || drawSource.height;
-        const scale = Math.max(innerW / srcW, innerH / srcH);
+        const scale = Math.max(drawW / srcW, drawH / srcH);
         const dw = srcW * scale;
         const dh = srcH * scale;
         ctx.drawImage(drawSource,
-          innerX + (innerW - dw) / 2,
-          innerY + (innerH - dh) / 2,
+          drawX + (drawW - dw) / 2,
+          drawY + (drawH - dh) / 2,
           dw, dh
         );
       }
@@ -270,13 +312,14 @@
   }
 
   function renderCanvas() {
+    if (!tplCanvas) return;
+
     const ctx = canvas.getContext('2d');
     canvas.width = CW;
     canvas.height = CH;
     paintComposite(ctx);
 
-    canvas.hidden = false;
-    if (placeholder) placeholder.hidden = true;
+    setPreviewState('ready');
     downloadBtn.disabled = !photoOriginal;
     syncPreviewDisplaySize();
   }
@@ -285,8 +328,7 @@
     if (!document.fonts || !document.fonts.load) {
       return Promise.resolve();
     }
-    const scale = CW / REF_TEMPLATE_SIZE;
-    const size = Math.max(30, Math.round(44 * scale));
+    const size = getNameFontSize();
     return Promise.all([
       document.fonts.ready,
       document.fonts.load('800 ' + size + 'px Inter'),
@@ -334,23 +376,45 @@
     triggerFileDownload(dataUrl, false);
   }
 
-  function drawNameSystem(ctx, rawName) {
-    const name = (rawName || '').trim();
-    if (!name) return;
+  function getNameFontSize() {
     const scale = CW / REF_TEMPLATE_SIZE;
-    const size = Math.max(30, Math.round(44 * scale));
-    ctx.save();
-    ctx.font = `800 ${size}px Arial, Helvetica, sans-serif`;
+    return Math.max(34, Math.round(NAME_FONT_REF * scale));
+  }
+
+  function splitNameIntoLines(name, ctx, fontFamily) {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return [];
+
+    const size = getNameFontSize();
+    ctx.font = `800 ${size}px ${fontFamily}`;
+    const maxWidth = ctx.measureText(NAME_LINE_REF).width + ctx.measureText('M').width;
+
+    const lines = [];
+    let line = '';
+    words.forEach(function (word) {
+      const candidate = line ? line + ' ' + word : word;
+      if (ctx.measureText(candidate).width <= maxWidth) {
+        line = candidate;
+        return;
+      }
+      if (line) lines.push(line);
+      line = word;
+    });
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function paintNameLines(ctx, name, fontFamily) {
+    const scale = CW / REF_TEMPLATE_SIZE;
+    const size = getNameFontSize();
+    const lineGap = Math.max(8, Math.round(10 * scale));
+    const lines = splitNameIntoLines(name, ctx, fontFamily);
+    if (!lines.length) return;
+    ctx.font = `800 ${size}px ${fontFamily}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    const words = name.split(/\s+/);
-    const lines = words.length <= 2 ? [name] : [
-      words.slice(0, Math.ceil(words.length / 2)).join(' '),
-      words.slice(Math.ceil(words.length / 2)).join(' ')
-    ];
-    const lineGap = Math.max(6, Math.round(8 * scale));
     const totalH = lines.length * size + (lines.length - 1) * lineGap;
-    let startY = NAME_Y - totalH / 2 + size;
+    const startY = NAME_Y - totalH / 2 + size;
     const outline = Math.max(2, Math.round(2.5 * scale));
     lines.forEach(function (line, i) {
       const ly = startY + i * (size + lineGap);
@@ -360,86 +424,25 @@
       ctx.fillStyle = NAME_COLOR;
       ctx.fillText(line, NAME_X, ly);
     });
-    ctx.restore();
   }
 
-  function archCornerRadius() {
-    return Math.max(24, Math.round(44 * (CW / REF_TEMPLATE_SIZE)));
+  function drawNameSystem(ctx, rawName) {
+    const name = (rawName || '').trim();
+    if (!name) return;
+    ctx.save();
+    paintNameLines(ctx, name, 'Arial, Helvetica, sans-serif');
+    ctx.restore();
   }
 
   function drawName(ctx, rawName) {
     const name = (rawName || '').trim();
     if (!name) return;
     ctx.save();
-    const scale = CW / REF_TEMPLATE_SIZE;
-    const size = Math.max(30, Math.round(44 * scale));
-    const lineGap = Math.max(6, Math.round(8 * scale));
-    ctx.font = `800 ${size}px Inter, Arial, 'Helvetica Neue', sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
-
-    var words = name.split(/\s+/);
-    var lines = [];
-    if (words.length <= 2) {
-      lines = [name];
-    } else {
-      var mid = Math.ceil(words.length / 2);
-      lines.push(words.slice(0, mid).join(' '));
-      lines.push(words.slice(mid).join(' '));
-    }
-
-    var totalH = lines.length * size + (lines.length - 1) * lineGap;
-    var startY = NAME_Y - totalH / 2 + size;
-    const outline = Math.max(2, Math.round(2.5 * scale));
-
-    for (var i = 0; i < lines.length; i++) {
-      var ly = startY + i * (size + lineGap);
-      ctx.lineWidth = outline;
-      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-      ctx.strokeText(lines[i], NAME_X, ly);
-      ctx.fillStyle = NAME_COLOR;
-      ctx.fillText(lines[i], NAME_X, ly);
-    }
+    paintNameLines(ctx, name, "Inter, Arial, 'Helvetica Neue', sans-serif");
     ctx.restore();
-  }
-
-  // Draw a smooth arch-like path (rounded rectangle approximation) used to
-  // cut a window from the template and to clip the user's photo.
-  function roundedArchPath(ctx, x, y, width, height, radius) {
-    // For simplicity we approximate the arch with a rounded rectangle
-    // which fits well with the templated artwork.
-    if (width < 2 * radius) radius = width / 2;
-    if (height < 2 * radius) radius = height / 2;
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.arcTo(x + width, y, x + width, y + radius, radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
-    ctx.lineTo(x + radius, y + height);
-    ctx.arcTo(x, y + height, x, y + height - radius, radius);
-    ctx.lineTo(x, y + radius);
-    ctx.arcTo(x, y, x + radius, y, radius);
-    ctx.closePath();
-  }
-
-  function roundRect(ctx, x, y, width, height, radius) {
-    if (width < 2 * radius) radius = width / 2;
-    if (height < 2 * radius) radius = height / 2;
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.arcTo(x + width, y, x + width, y + radius, radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
-    ctx.lineTo(x + radius, y + height);
-    ctx.arcTo(x, y + height, x, y + height - radius, radius);
-    ctx.lineTo(x, y + radius);
-    ctx.arcTo(x, y, x + radius, y, radius);
-    ctx.closePath();
   }
 
   /* ── UI HELPERS ── */
@@ -506,7 +509,16 @@
   });
 
   window.addEventListener('resize', syncPreviewDisplaySize);
-  tryLoadTemplate();
+
+  function initApp() {
+    tryLoadTemplate();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+  } else {
+    initApp();
+  }
 
   /* ── Eid Salami Popup ── */
   (function () {
