@@ -24,10 +24,11 @@
     photo: { x: 164, y: 414, width: 543, height: 687 },
     nameGap: 78
   };
-  const NAME_COLOR = '#7a0c18';
+  const NAME_COLOR = '#d93d15';
   const PHOTO_SCALE = 1.08;
   const NAME_LINE_REF = 'Mozammel Hosain';
-  const NAME_FONT_REF = 54;
+  const NAME_FONT_REF = 48;
+  const NAME_FONT_WEIGHT = 700;
 
   let CW = BASE_CANVAS_SIZE, CH = BASE_CANVAS_SIZE;
 
@@ -331,8 +332,7 @@
     const size = getNameFontSize();
     return Promise.all([
       document.fonts.ready,
-      document.fonts.load('800 ' + size + 'px Inter'),
-      document.fonts.load('700 ' + size + 'px Inter')
+      document.fonts.load(NAME_FONT_WEIGHT + ' ' + size + 'px Inter')
     ]).catch(function () { return undefined; });
   }
 
@@ -378,7 +378,7 @@
 
   function getNameFontSize() {
     const scale = CW / REF_TEMPLATE_SIZE;
-    return Math.max(34, Math.round(NAME_FONT_REF * scale));
+    return Math.max(30, Math.round(NAME_FONT_REF * scale));
   }
 
   function splitNameIntoLines(name, ctx, fontFamily) {
@@ -386,7 +386,7 @@
     if (!words.length) return [];
 
     const size = getNameFontSize();
-    ctx.font = `800 ${size}px ${fontFamily}`;
+    ctx.font = `${NAME_FONT_WEIGHT} ${size}px ${fontFamily}`;
     const maxWidth = ctx.measureText(NAME_LINE_REF).width + ctx.measureText('M').width;
 
     const lines = [];
@@ -410,7 +410,7 @@
     const lineGap = Math.max(8, Math.round(10 * scale));
     const lines = splitNameIntoLines(name, ctx, fontFamily);
     if (!lines.length) return;
-    ctx.font = `800 ${size}px ${fontFamily}`;
+    ctx.font = `${NAME_FONT_WEIGHT} ${size}px ${fontFamily}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     const totalH = lines.length * size + (lines.length - 1) * lineGap;
