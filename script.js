@@ -471,7 +471,7 @@
 
   /* ── EVENTS ── */
   photoInput.addEventListener('change', () => loadPhoto(photoInput.files[0]));
-  nameInput.addEventListener('input', () => { clearTimeout(nameTimer); nameTimer = setTimeout(renderCanvas, 200); });
+  nameInput.addEventListener('input', () => { nameInput.value = nameInput.value.toUpperCase(); clearTimeout(nameTimer); nameTimer = setTimeout(renderCanvas, 200); });
 
   uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
   uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
