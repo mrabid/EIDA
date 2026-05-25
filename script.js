@@ -239,7 +239,7 @@
     const scale = Math.max(
       box.width / srcW,
       box.height / srcH
-    ) * 1.25;
+    ) * 1.01;
 
     const dw = srcW * scale;
     const dh = srcH * scale;
