@@ -25,7 +25,7 @@
     nameGap: 78
   };
   const NAME_COLOR = '#d93d15';
-  const PHOTO_SCALE = 1.08;
+  const PHOTO_SCALE = 1.0;
   const NAME_LINE_REF = 'Mozammel Hosain';
   const NAME_FONT_REF = 48;
   const NAME_FONT_WEIGHT = 700;
@@ -254,16 +254,29 @@
   function cropToBitmap(img) {
     const iw = img.naturalWidth || img.width;
     const ih = img.naturalHeight || img.height;
-    const scale = Math.max(PHOTO_BOX.width / iw, PHOTO_BOX.height / ih);
-    const sw = iw * scale;
-    const sh = ih * scale;
+    const scale = Math.min(PHOTO_BOX.width / iw, PHOTO_BOX.height / ih);
+    const sw = Math.round(iw * scale);
+    const sh = Math.round(ih * scale);
 
     const off = document.createElement('canvas');
     off.width = PHOTO_BOX.width;
     off.height = PHOTO_BOX.height;
     const ctx = off.getContext('2d');
+    ctx.clearRect(0, 0, off.width, off.height);
     ctx.drawImage(img, (PHOTO_BOX.width - sw) / 2, (PHOTO_BOX.height - sh) / 2, sw, sh);
     return off;
+  }
+
+  function drawRawPreviewImage(ctx, img) {
+    const srcW = img.naturalWidth || img.width;
+    const srcH = img.naturalHeight || img.height;
+    const box = PHOTO_BOX && PHOTO_BOX.width && PHOTO_BOX.height ? PHOTO_BOX : { x: 0, y: 0, width: CW, height: CH };
+    const scale = Math.min(box.width / srcW, box.height / srcH) * 1.25;
+    const dw = Math.round(srcW * scale);
+    const dh = Math.round(srcH * scale);
+    const dx = Math.round(box.x + (box.width - dw) / 2);
+    const dy = Math.round(box.y + (box.height - dh) / 2 + box.height * 0.02);
+    ctx.drawImage(img, dx, dy, dw, dh);
   }
 
   function paintComposite(ctx, opts) {
@@ -271,30 +284,34 @@
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, CW, CH);
 
-    if (photoBitmap || photoOriginal) {
-      const drawW = Math.round(PHOTO_BOX.width * PHOTO_SCALE);
-      const drawH = Math.round(PHOTO_BOX.height * PHOTO_SCALE);
-      const drawX = PHOTO_BOX.x - Math.round((drawW - PHOTO_BOX.width) / 2);
-      const drawY = PHOTO_BOX.y - Math.round((drawH - PHOTO_BOX.height) / 2);
-
+    if (photoOriginal) {
       ctx.save();
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      const drawSource = photoBitmap || photoOriginal;
-      if (photoBitmap) {
-        ctx.drawImage(photoBitmap, drawX, drawY, drawW, drawH);
+      if (opts.export) {
+        const drawW = Math.round(PHOTO_BOX.width * PHOTO_SCALE);
+        const drawH = Math.round(PHOTO_BOX.height * PHOTO_SCALE);
+        const drawX = PHOTO_BOX.x - Math.round((drawW - PHOTO_BOX.width) / 2);
+        const drawY = PHOTO_BOX.y - Math.round((drawH - PHOTO_BOX.height) / 2);
+
+        const drawSource = photoBitmap || photoOriginal;
+        if (photoBitmap) {
+          ctx.drawImage(photoBitmap, drawX, drawY, drawW, drawH);
+        } else {
+          const srcW = drawSource.naturalWidth || drawSource.width;
+          const srcH = drawSource.naturalHeight || drawSource.height;
+          const scale = Math.min(drawW / srcW, drawH / srcH);
+          const dw = srcW * scale;
+          const dh = srcH * scale;
+          ctx.drawImage(drawSource,
+            drawX + (drawW - dw) / 2,
+            drawY + (drawH - dh) / 2,
+            dw, dh
+          );
+        }
       } else {
-        const srcW = drawSource.naturalWidth || drawSource.width;
-        const srcH = drawSource.naturalHeight || drawSource.height;
-        const scale = Math.max(drawW / srcW, drawH / srcH);
-        const dw = srcW * scale;
-        const dh = srcH * scale;
-        ctx.drawImage(drawSource,
-          drawX + (drawW - dw) / 2,
-          drawY + (drawH - dh) / 2,
-          dw, dh
-        );
+        drawRawPreviewImage(ctx, photoOriginal);
       }
       ctx.restore();
     }

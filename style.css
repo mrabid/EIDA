@@ -301,7 +301,10 @@ body {
 /* ================================================================
    Preview
    ================================================================ */
-.preview-section { width: 100%; }
+.preview-section {
+  width: 100%;
+  margin-top: 1.5rem;
+}
 
 .preview-wrap {
   position: relative;
